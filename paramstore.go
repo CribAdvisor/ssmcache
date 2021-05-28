@@ -13,4 +13,7 @@ type ParamStore interface {
 	PutParameter(ctx context.Context,
 		params *ssm.PutParameterInput,
 		optFns ...func(*ssm.Options)) (*ssm.PutParameterOutput, error)
+	DeleteParameter(ctx context.Context,
+		params *ssm.DeleteParameterInput,
+		optFns ...func(*ssm.Options)) (*ssm.DeleteParameterOutput, error)
 }

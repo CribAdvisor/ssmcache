@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -86,14 +87,14 @@ func (cache *ssmcache) getParamType() types.ParameterType {
 	}
 }
 
-type ParamValue struct {
+type paramValue struct {
 	TTL   uint
 	Value string
 }
 
-func (cache *ssmcache) Set(key string, value string, ttl uint) error {
+func (cache *ssmcache) Set(key string, value string, ttl time.Duration) error {
 	parameterName := cache.getParameterName(key)
-	param := ParamValue{ttl, value}
+	param := paramValue{uint(ttl.Seconds()), value}
 
 	paramJSON, err := json.Marshal(param)
 	if err != nil {
@@ -109,22 +110,28 @@ func (cache *ssmcache) Set(key string, value string, ttl uint) error {
 	return err
 }
 
-func (cache *ssmcache) Get(key string) (*ParamValue, error) {
+func (cache *ssmcache) Get(key string) (*string, error) {
 	parameterName := cache.getParameterName(key)
 
-	valueJSON, err := cache.ssm.GetParameter(context.TODO(), &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
-	if *valueJSON.Parameter.Value == "" {
+	parameterOutput, err := cache.ssm.GetParameter(context.TODO(), &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
+	if err != nil {
+		return nil, err
+	}
+	if *parameterOutput.Parameter.Value == "" {
 		return nil, fmt.Errorf("no parameter found: %s", parameterName)
 	}
+
+	var value paramValue
+	err = json.Unmarshal([]byte(*parameterOutput.Parameter.Value), &value)
 	if err != nil {
 		return nil, err
 	}
 
-	var value ParamValue
-	err = json.Unmarshal([]byte(*valueJSON.Parameter.Value), &value)
-	if err != nil {
-		return nil, err
+	timestamp := (*parameterOutput.Parameter.LastModifiedDate).Unix()
+	if time.Now().Unix() > (timestamp + int64(time.Second*time.Duration(value.TTL))) {
+		cache.ssm.DeleteParameter(context.TODO(), &ssm.DeleteParameterInput{Name: &parameterName})
+		return nil, nil
 	}
 
-	return &value, nil
+	return &value.Value, nil
 }
