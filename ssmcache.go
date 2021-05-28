@@ -27,7 +27,7 @@ type SSMCacheOptions struct {
 
 type ssmcache struct {
 	options SSMCacheOptions
-	ssm     ParamStore
+	ssm     paramStore
 }
 
 func getDefaultOptions() *SSMCacheOptions {

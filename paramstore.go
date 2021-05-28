@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
-type ParamStore interface {
+type paramStore interface {
 	GetParameter(ctx context.Context,
 		params *ssm.GetParameterInput,
 		optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error)
