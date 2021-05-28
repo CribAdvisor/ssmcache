@@ -37,7 +37,7 @@ func (store *MockParamStore) DeleteParameter(ctx context.Context, params *ssm.De
 	return &ssm.DeleteParameterOutput{}, nil
 }
 
-func NewMock(initial map[string]string) (*MockParamStore, *ssmcache) {
+func NewMock(initial map[string]string) (*MockParamStore, *SSMCache) {
 	client := MockParamStore{params: initial}
 	secret := new(bool)
 	*secret = true
@@ -48,7 +48,7 @@ func NewMock(initial map[string]string) (*MockParamStore, *ssmcache) {
 		BasePath: basePath,
 		KeyId:    nil,
 	}
-	return &client, &ssmcache{
+	return &client, &SSMCache{
 		options: options,
 		ssm:     &client,
 	}

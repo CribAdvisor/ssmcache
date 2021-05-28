@@ -25,7 +25,7 @@ type SSMCacheOptions struct {
 	KeyId *string
 }
 
-type ssmcache struct {
+type SSMCache struct {
 	options SSMCacheOptions
 	ssm     paramStore
 }
@@ -61,7 +61,7 @@ func mergeDefaults(options *SSMCacheOptions) {
 // Secret=true
 // BasePath="/cache"
 // KeyId=nil
-func New(options *SSMCacheOptions) (*ssmcache, error) {
+func New(options *SSMCacheOptions) (*SSMCache, error) {
 	mergeDefaults(options)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -70,7 +70,7 @@ func New(options *SSMCacheOptions) (*ssmcache, error) {
 	}
 	client := ssm.NewFromConfig(cfg)
 
-	return &ssmcache{
+	return &SSMCache{
 		options: *options,
 		ssm:     client,
 	}, nil
@@ -81,11 +81,11 @@ func escapeParameterName(name string) string {
 	return re.ReplaceAllString(name, "_")
 }
 
-func (cache *ssmcache) getParameterName(key string) string {
+func (cache *SSMCache) getParameterName(key string) string {
 	return fmt.Sprintf("%s/%s", *cache.options.BasePath, escapeParameterName(key))
 }
 
-func (cache *ssmcache) getParamType() types.ParameterType {
+func (cache *SSMCache) getParamType() types.ParameterType {
 	if *cache.options.Secret {
 		return types.ParameterTypeSecureString
 	} else {
@@ -99,7 +99,7 @@ type paramValue struct {
 }
 
 // Set puts a parameter into SSM for the given key, excluding the BasePath of the cache
-func (cache *ssmcache) Set(key string, value string, ttl time.Duration) error {
+func (cache *SSMCache) Set(key string, value string, ttl time.Duration) error {
 	parameterName := cache.getParameterName(key)
 	param := paramValue{uint(ttl.Seconds()), value}
 
@@ -118,7 +118,7 @@ func (cache *ssmcache) Set(key string, value string, ttl time.Duration) error {
 }
 
 // Get retrieves a parameter from SSM with the given key, excluding the BasePath of the cache
-func (cache *ssmcache) Get(key string) (*string, error) {
+func (cache *SSMCache) Get(key string) (*string, error) {
 	parameterName := cache.getParameterName(key)
 
 	parameterOutput, err := cache.ssm.GetParameter(context.TODO(), &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
