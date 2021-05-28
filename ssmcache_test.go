@@ -14,25 +14,28 @@ import (
 
 type MockParamStore struct {
 	cache map[string]string
+	calls uint
 }
 
-func (store MockParamStore) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
+func (store *MockParamStore) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
+	store.calls++
 	value := store.cache[*params.Name]
 	return &ssm.GetParameterOutput{Parameter: &types.Parameter{Value: &value}}, nil
 }
 
-func (store MockParamStore) PutParameter(ctx context.Context, params *ssm.PutParameterInput, optFns ...func(*ssm.Options)) (*ssm.PutParameterOutput, error) {
+func (store *MockParamStore) PutParameter(ctx context.Context, params *ssm.PutParameterInput, optFns ...func(*ssm.Options)) (*ssm.PutParameterOutput, error) {
+	store.calls++
 	store.cache[*params.Name] = *params.Value
 	return &ssm.PutParameterOutput{}, nil
 }
 
-func NewMock(initial map[string]string) (MockParamStore, *ssmcache) {
+func NewMock(initial map[string]string) (*MockParamStore, *ssmcache) {
 	client := MockParamStore{cache: initial}
 	var options SSMCacheOptions
 	mergeDefaults(&options)
-	return client, &ssmcache{
+	return &client, &ssmcache{
 		options: options,
-		ssm:     client,
+		ssm:     &client,
 	}
 }
 
@@ -52,10 +55,14 @@ func TestSet(t *testing.T) {
 	if _, ok := mock.cache[paramName]; !ok {
 		t.Fatalf("Param %s not found in %v", paramName, mock.cache)
 	}
+
+	if mock.calls != 1 {
+		t.Fatalf("Calls = %d, expected 1", mock.calls)
+	}
 }
 
 func TestGet(t *testing.T) {
-	_, cache := NewMock(map[string]string{
+	mock, cache := NewMock(map[string]string{
 		"/cache/test": `{"TTL":3600,"Value":"test"}`,
 	})
 
@@ -71,5 +78,9 @@ func TestGet(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, expected) {
 		t.Fatalf("Get(%v) = %v, expected %v", key, got, expected)
+	}
+
+	if mock.calls != 1 {
+		t.Fatalf("Calls = %d, expected 1", mock.calls)
 	}
 }

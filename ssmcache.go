@@ -74,11 +74,11 @@ func escapeParameterName(name string) string {
 	return re.ReplaceAllString(name, "_")
 }
 
-func (cache ssmcache) getParameterName(key string) string {
+func (cache *ssmcache) getParameterName(key string) string {
 	return fmt.Sprintf("%s/%s", *cache.options.BasePath, escapeParameterName(key))
 }
 
-func (cache ssmcache) getParamType() types.ParameterType {
+func (cache *ssmcache) getParamType() types.ParameterType {
 	if *cache.options.Secret {
 		return types.ParameterTypeSecureString
 	} else {
@@ -91,7 +91,7 @@ type ParamValue struct {
 	Value string
 }
 
-func (cache ssmcache) Set(key string, value string, ttl uint) error {
+func (cache *ssmcache) Set(key string, value string, ttl uint) error {
 	parameterName := cache.getParameterName(key)
 	param := ParamValue{ttl, value}
 
@@ -105,11 +105,11 @@ func (cache ssmcache) Set(key string, value string, ttl uint) error {
 
 	paramType := cache.getParamType()
 
-	cache.ssm.PutParameter(context.TODO(), &ssm.PutParameterInput{Name: &parameterName, Value: jsonString, Type: paramType})
-	return nil
+	_, err = cache.ssm.PutParameter(context.TODO(), &ssm.PutParameterInput{Name: &parameterName, Value: jsonString, Type: paramType})
+	return err
 }
 
-func (cache ssmcache) Get(key string) (*ParamValue, error) {
+func (cache *ssmcache) Get(key string) (*ParamValue, error) {
 	parameterName := cache.getParameterName(key)
 
 	valueJSON, err := cache.ssm.GetParameter(context.TODO(), &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
