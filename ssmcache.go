@@ -13,15 +13,15 @@ import (
 )
 
 type SSMCacheOptions struct {
-	// Parameter type, `true` for `SecureString`, false for `String`
+	// Secret is used to set SSM parameter type, true for SecureString, false for String
 	Secret *bool
 
-	// Where the parameters are stored within SSM *excluding trailing slash*
+	// BasePath is where the parameters are stored within SSM, excluding trailing slash
 	//
-	// Be sure to update the IAM policy (see `README.md`) if changed
+	// Be sure to update the IAM policy (see README.md) to match this
 	BasePath *string
 
-	// ARN of KMS key id to use to encrypt parameter value
+	// KeyId is the ARN of KMS key id to use to encrypt parameter value
 	KeyId *string
 }
 
@@ -55,6 +55,12 @@ func mergeDefaults(options *SSMCacheOptions) {
 	}
 }
 
+// New creates a new cache, if options are nil, the defaults are used
+//
+// Defaults:
+// Secret=true
+// BasePath="/cache"
+// KeyId=nil
 func New(options *SSMCacheOptions) (*ssmcache, error) {
 	mergeDefaults(options)
 
@@ -92,6 +98,7 @@ type paramValue struct {
 	Value string
 }
 
+// Set puts a parameter into SSM for the given key, excluding the BasePath of the cache
 func (cache *ssmcache) Set(key string, value string, ttl time.Duration) error {
 	parameterName := cache.getParameterName(key)
 	param := paramValue{uint(ttl.Seconds()), value}
@@ -110,6 +117,7 @@ func (cache *ssmcache) Set(key string, value string, ttl time.Duration) error {
 	return err
 }
 
+// Get retrieves a parameter from SSM with the given key, excluding the BasePath of the cache
 func (cache *ssmcache) Get(key string) (*string, error) {
 	parameterName := cache.getParameterName(key)
 
