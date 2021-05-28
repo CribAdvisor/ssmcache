@@ -1,7 +1,11 @@
 # ssmcache
+
 Cache un/encrypted expiring values as AWS SSM parameters with a TTL
 
 ## Usage
+
+[Docs](https://pkg.go.dev/github.com/CribAdvisor/ssmcache)
+
 ```go
 import (
     "github.com/CribAdvisor/ssmcache"
@@ -28,6 +32,7 @@ func main() {
 ```
 
 ## Required IAM permissions
+
 **NOTE:**
 1. Replace `Resource` with your AWS region and account ID
 2. Replace `/cache` with the modified `BasePath` if applicable
