@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-    cache := ssmcache.New(ssmcache.SSMCacheOptions{
+    cache := ssmcache.New(&ssmcache.SSMCacheOptions{
         Secret: true,
         BasePath: "/cache",
         KeyId: nil,
