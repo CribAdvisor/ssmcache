@@ -37,7 +37,7 @@ func main() {
 1. Replace `Resource` with your AWS region and account ID
 2. Replace `/cache` with the modified `BasePath` if applicable
 3. Add `kms:Encrypt` and `kms:Decrypt` actions and resources for your KMS key (if applicable)
-```
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
