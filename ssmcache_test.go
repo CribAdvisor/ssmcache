@@ -73,7 +73,7 @@ func TestSet(t *testing.T) {
 	ttl := time.Hour
 	value := uuid.NewString()
 
-	err := cache.Set(key, value, ttl)
+	err := cache.Set(context.Background(), key, value, ttl)
 	if err != nil {
 		t.Fatalf("Set(%v, %v, %v), error %v", key, value, ttl, err)
 	}
@@ -97,7 +97,7 @@ func TestGet(t *testing.T) {
 		getParamName(key), fmt.Sprintf(`{"TTL":3600,"Value":"%s"}`, value),
 	))
 
-	got, err := cache.Get(key)
+	got, err := cache.Get(context.Background(), key)
 	if err != nil {
 		t.Fatalf("Get(%v), error: %v", key, err)
 	}
@@ -116,7 +116,7 @@ func TestGetMissing(t *testing.T) {
 
 	_, cache := NewMock(createInitial())
 
-	got, err := cache.Get(key)
+	got, err := cache.Get(context.Background(), key)
 	if err == nil {
 		t.Fatalf("Expected error, got nil")
 	}
@@ -135,8 +135,8 @@ func TestOverwrite(t *testing.T) {
 	value := uuid.NewString()
 	ttl := time.Hour
 
-	cache.Set(key, value, ttl)
-	got, _ := cache.Get(key)
+	cache.Set(context.Background(), key, value, ttl)
+	got, _ := cache.Get(context.Background(), key)
 	if *got != value {
 		t.Fatalf("Got %v, expected %v", *got, value)
 	}
@@ -154,9 +154,9 @@ func TestFutureTTL(t *testing.T) {
 	value := uuid.NewString()
 	ttl := time.Minute * 5
 
-	cache.Set(key, value, ttl)
+	cache.Set(context.Background(), key, value, ttl)
 
-	got, _ := cache.Get(key)
+	got, _ := cache.Get(context.Background(), key)
 	if *got != value {
 		t.Fatalf("Got %v, expected %v", *got, value)
 	}
@@ -174,9 +174,9 @@ func TestExpiredTTL(t *testing.T) {
 	value := uuid.NewString()
 	ttl := -1 * time.Second
 
-	cache.Set(key, value, ttl)
+	cache.Set(context.Background(), key, value, ttl)
 
-	got, _ := cache.Get(key)
+	got, _ := cache.Get(context.Background(), key)
 	if got != nil {
 		t.Fatalf("Got %v, expected nil", *got)
 	}

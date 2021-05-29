@@ -61,10 +61,10 @@ func mergeDefaults(options *SSMCacheOptions) {
 // Secret=true
 // BasePath="/cache"
 // KeyId=nil
-func New(options *SSMCacheOptions) (*SSMCache, error) {
+func New(ctx context.Context, options *SSMCacheOptions) (*SSMCache, error) {
 	mergeDefaults(options)
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ type paramValue struct {
 }
 
 // Set puts a parameter into SSM for the given key, excluding the BasePath of the cache
-func (cache *SSMCache) Set(key string, value string, ttl time.Duration) error {
+func (cache *SSMCache) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	parameterName := cache.getParameterName(key)
 	param := paramValue{uint(ttl.Seconds()), value}
 
@@ -113,15 +113,15 @@ func (cache *SSMCache) Set(key string, value string, ttl time.Duration) error {
 
 	paramType := cache.getParamType()
 
-	_, err = cache.ssm.PutParameter(context.TODO(), &ssm.PutParameterInput{Name: &parameterName, Value: jsonString, Type: paramType})
+	_, err = cache.ssm.PutParameter(ctx, &ssm.PutParameterInput{Name: &parameterName, Value: jsonString, Type: paramType})
 	return err
 }
 
 // Get retrieves a parameter from SSM with the given key, excluding the BasePath of the cache
-func (cache *SSMCache) Get(key string) (*string, error) {
+func (cache *SSMCache) Get(ctx context.Context, key string) (*string, error) {
 	parameterName := cache.getParameterName(key)
 
-	parameterOutput, err := cache.ssm.GetParameter(context.TODO(), &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
+	parameterOutput, err := cache.ssm.GetParameter(ctx, &ssm.GetParameterInput{Name: &parameterName, WithDecryption: *cache.options.Secret})
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (cache *SSMCache) Get(key string) (*string, error) {
 
 	timestamp := (*parameterOutput.Parameter.LastModifiedDate).Unix()
 	if time.Now().Unix() > (timestamp + int64(time.Second*time.Duration(value.TTL))) {
-		cache.ssm.DeleteParameter(context.TODO(), &ssm.DeleteParameterInput{Name: &parameterName})
+		cache.ssm.DeleteParameter(ctx, &ssm.DeleteParameterInput{Name: &parameterName})
 		return nil, nil
 	}
 
