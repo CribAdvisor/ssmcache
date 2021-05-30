@@ -59,7 +59,7 @@ func getParamName(key string) string {
 }
 
 func createInitial(values ...string) (initial map[string]string) {
-	initial = map[string]string{}
+	initial = make(map[string]string)
 	for i := 0; i < len(values); i += 2 {
 		initial[values[i]] = values[i+1]
 	}
@@ -129,7 +129,7 @@ func TestOverwrite(t *testing.T) {
 	key := "test/overwrite"
 
 	mock, cache := NewMock(createInitial(
-		getParamName(key), uuid.NewString(),
+		getParamName(key), fmt.Sprintf(`{"TTL":300,"Value":"%s"}`, uuid.NewString()),
 	))
 
 	value := uuid.NewString()
