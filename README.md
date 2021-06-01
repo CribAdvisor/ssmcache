@@ -24,7 +24,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if token == nil {
+    if accessToken == nil {
         // obtain a new token
         // newToken, ttl := getNewToken(...)
         accessToken = newToken
