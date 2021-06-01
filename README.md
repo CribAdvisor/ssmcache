@@ -8,6 +8,8 @@ Cache un/encrypted expiring values as AWS SSM parameters with a TTL
 
 ```go
 import (
+    "log"
+
     "github.com/CribAdvisor/ssmcache"
 )
 
@@ -20,7 +22,7 @@ func main() {
 
     accessToken, err := cache.Get("my_token")
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
     if token == nil {
         // obtain a new token
